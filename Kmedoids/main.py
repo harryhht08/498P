@@ -43,7 +43,7 @@ def buildRankTable(data):
             rank[j][i] = (d, i)
 
     for i in range(n):
-        rank[i].sort(key=lambda x: x[0])
+        rank[i].sort(key=lambda x: x[0]) # Sort based on distances
         r = 0
         rankings = []
         for j in range(n):
@@ -64,6 +64,7 @@ def buildRankTable(data):
 
 # tableS: a nxn matrix containing all Sij values
 # setG: set of integers - indexes of data points
+# n: size of dataset
 def getHv(index, n, rankTable, setG):
     m = len(setG)
     hv = m * (m + 1) / 2
