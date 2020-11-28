@@ -43,7 +43,7 @@ def buildRankTable(data):
             rank[j][i] = (d, i)
 
     for i in range(n):
-        rank[i].sort(key=lambda x: x[0]) # Sort based on distances
+        rank[i].sort(key=lambda x: x[0])  # Sort based on distances
         r = 0
         rankings = []
         for j in range(n):
@@ -51,7 +51,7 @@ def buildRankTable(data):
             if j <= n - 2 and rank[i][j][0] == rank[i][j + 1][0]:
                 r -= 1
             r += 1
-            similarityMetrix[i][j] = rank[i][j][1] # Store the sample points
+            similarityMetrix[i][j] = rank[i][j][1]  # Store the sample points
             rank[i][j] = rank[i][j][1]
 
         newList = [0] * n
@@ -59,14 +59,14 @@ def buildRankTable(data):
             newList[rank[i][j]] = rankings[j]
 
         rank[i] = newList
+
     return rank, similarityMetrix
 
 
 # tableS: a nxn matrix containing all Sij values
 # setG: set of integers - indexes of data points
 # n: size of dataset
-def getHv(index, n, rankTable, setG):
-    m = len(setG)
+def getHv(index, m, n, rankTable, setG):
     hv = m * (m + 1) / 2
     for j in range(n):
         if not j in setG:
@@ -77,18 +77,53 @@ def getHv(index, n, rankTable, setG):
 
 
 def randomMedoids(k, data):
-    medoids = []
+    medoids = set()
     for i in range(k):
-        medoids.append(random.randint(0, len(data)))
+        oldLen = len(medoids)
+        while (len(medoids) == oldLen):
+            medoids.add(random.randint(0, len(data) - 1))
     return medoids
 
 
-def assignToGroups(m, medoids, rankTable, similarityMetrix):
+def assignToClusters(k, n, medoids, rankTable):
     groups = []  # list of Set
-    for medoid in medoids:
-        group = set(similarityMetrix[medoid][:m])
-        groups.append(group)
+    for i in range(k):
+        groups.append([])  # Make k empty groups
+    medoidsList = list(medoids)
+
+    for i in range(n):
+        rankRowI = rankTable[i]
+        min = n
+        for j in range(k):
+            m = medoidsList[j]
+            if rankRowI[m] < min:
+                min = rankRowI[m]
+        for j in range(k):
+            m = medoidsList[j]
+            if rankRowI[m] == min:
+                groups[j].append(i)
+
+        # cursor = 0
+        # while (cursor < n):
+        #     if similarityMetrix[i][cursor] in medoids:
+        #         for groupIndex in range(k):
+        #             if similarityMetrix[i][cursor] == medoidsList[groupIndex]:
+        #                 groups[groupIndex].append(similarityMetrix[i][cursor])
+        #         break  # Break the while loop if found the closest medoid
+        #     cursor += 1
     return groups
+
+
+def updateMedoids(k, m, n, medoids, similarityTable, rankTable):
+    newMedoids = set()
+    for med in medoids:
+        mostSimilar = similarityTable[med][:m]
+        maxHv = (-1, -1)
+        for simi in mostSimilar:
+            hv = getHv(simi, m, n, rankTable, set(mostSimilar))
+            if hv > maxHv[1]:
+                maxHv = (simi, hv)
+        newMedoids.add(maxHv[0])
 
 
 def printNice(table):
@@ -96,25 +131,59 @@ def printNice(table):
         print(i)
 
 
-if __name__ == '__main__':
-    data = getDataset()
+def testPrintTables(data):
+    r, s = buildRankTable(data)
+    print("Rank Table: ")
+    printNice(r)
+    print()
+    print("Similarity Table: ")
+    printNice(s)
+
+
+def test01():
+    data = []
+    for i in range(3):
+        data.append([i])
+        data.append([i])
+        data.append([i + 10])
+        data.append([i + 10])
+    main(data)
+
+
+def main(data):
     n = len(data)
-    numOfLoops = 50
-    k = 5
-    m = 20
+    numOfLoops = 5000
+    k = 2
+    m = 3
     medoids = randomMedoids(k, data)
     rankTable, similarityMetrix = buildRankTable(data)
     for i in range(numOfLoops):
-        groups = assignToGroups(m, medoids, rankTable, similarityMetrix)
-        newMedoids = []
-        for group in groups:
+        updateMedoids(k, m, n, medoids, similarityMetrix, rankTable)
+    clusters = assignToClusters(k, n, medoids, rankTable)
 
-            # The first position stores the new medoid, the second stores the maximum hv value
-            maxHv = (-1, -1)
-            for point in group:
-                hv = getHv(point, n, rankTable, group)
-                if hv > maxHv[1]:
-                    maxHv = (point, hv)
-            newMedoids.append(maxHv[0])
-        medoids = newMedoids
+    # groups = assignToClusters(k, n, medoids, rankTable)
+    # newMedoids = set()
+    # for group in groups:
+    #
+    #     # The first position stores the new medoid, the second stores the maximum hv value
+    #     maxHv = (-1, -1)
+    #     for point in group:
+    #         hv = getHv(point, m, n, rankTable, group)
+    #         if hv > maxHv[1]:
+    #             maxHv = (point, hv)
+    #     newMedoids.add(maxHv[0])
+    # medoids = newMedoids
     # Output: Groups!
+    print('sss')
+
+
+if __name__ == '__main__':
+    # testList = [[9], [11], [9], [8], [20], [7], [4]]
+    # testPrintTables(testList)
+
+    # data = getDataset()
+    # main(data)
+
+    test01()
+
+    print("hello")
