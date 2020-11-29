@@ -8,8 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-# The only missing method is the portal where we can get the data
-
 def getDataset():
     data = pd.read_csv("mushroom-attributions-200-samples.csv")
     data = data[['odor', 'bruises']]  # Reduce dims of dataset in order to visualize
@@ -19,6 +17,22 @@ def getDataset():
     for i in range(l):
         dataset.append(data.loc[i])
     return dataset
+
+
+def generate2dData():
+    xs = []
+    ys = []
+    n = 500
+    for i in range(n):
+        xs.append(random.random())
+        ys.append(random.random())
+        if i > .9 * n:
+            xs.append(random.random() + .5)
+            ys.append(random.random() + .5)
+    data = []
+    for i in range(n):
+        data.append([xs[i], ys[i]])
+    return data
 
 
 # data: the actual data we use for this algorithm, it is a collection of data points, each point has dimension dims
@@ -140,7 +154,7 @@ def testPrintTables(data):
     printNice(s)
 
 
-def test01():
+def test1D():
     data = []
     for i in range(3):
         data.append([i])
@@ -150,11 +164,41 @@ def test01():
     main(data)
 
 
+def test2D():
+    main(generate2dData())
+
+
+def testMushroomDataset():
+    df = pd.read_csv('mushroom-attributions-200-samples.csv')
+    dataset = []
+    for i in range(len(df)):
+        dataset.append(df.loc[i])
+    main(dataset)
+
+
+def plotClusters(clusters, data):
+    for i in clusters[0]:
+        plt.scatter(data[i][0], data[i][1], c='red')
+    for i in clusters[1]:
+        plt.scatter(data[i][0], data[i][1], c='green')
+
+
+# This method checks whether there exists some data points in different clusters
+def checkClustersContainDifferent(clusters):
+    for i in range(len(clusters)):
+        for d in clusters[i]:
+            for j in range(len(clusters)):
+                if i != j:
+                    if d in clusters[j]:
+                        return False
+    return True
+
+
 def main(data):
     n = len(data)
-    numOfLoops = 5000
-    k = 2
-    m = 3
+    numOfLoops = 100
+    k = 5
+    m = 12
     medoids = randomMedoids(k, data)
     rankTable, similarityMetrix = buildRankTable(data)
     for i in range(numOfLoops):
@@ -174,7 +218,12 @@ def main(data):
     #     newMedoids.add(maxHv[0])
     # medoids = newMedoids
     # Output: Groups!
-    print('sss')
+
+    if len(data[0]) <= 2:
+        plotClusters(clusters, data)
+
+    print(clusters)
+    print(checkClustersContainDifferent(clusters))
 
 
 if __name__ == '__main__':
@@ -184,6 +233,8 @@ if __name__ == '__main__':
     # data = getDataset()
     # main(data)
 
-    test01()
+    # test1D()
 
-    print("hello")
+    # test2D()
+
+    testMushroomDataset()
