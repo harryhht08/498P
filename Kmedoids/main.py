@@ -6,6 +6,8 @@
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 
 def getDataset():
@@ -192,6 +194,36 @@ def checkClustersContainDifferent(clusters):
                     if d in clusters[j]:
                         return False
     return True
+
+
+def standardizeData(df):
+    features = df.columns
+    # Separating out the features
+    x = df.loc[:, features].values
+    # Separating out the target
+
+    # Standardizing the features
+    x = StandardScaler().fit_transform(x)
+
+
+def pcaDataAndPlot(x, clusters):
+    pca = PCA(n_components=2)
+    principalComponents = pca.fit_transform(x)
+    principalDf = pd.DataFrame(data=principalComponents, columns=['principal component 1', 'principal component 2'])
+
+    colors = ['blue', 'black', 'yellow', 'green', 'purple']
+    plt.figure(figsize=(10, 8))
+    plt.xlim(-3, 3)
+    for i in clusters[0]:
+        plt.scatter(principalDf.loc[i][0], principalDf.loc[i][1], c=colors[0])
+    for i in clusters[1]:
+        plt.scatter(principalDf.loc[i][0], principalDf.loc[i][1], c=colors[1])
+    for i in clusters[2]:
+        plt.scatter(principalDf.loc[i][0], principalDf.loc[i][1], c=colors[2])
+    for i in clusters[3]:
+        plt.scatter(principalDf.loc[i][0], principalDf.loc[i][1], c=colors[3])
+    for i in clusters[4]:
+        plt.scatter(principalDf.loc[i][0], principalDf.loc[i][1], c=colors[4])
 
 
 def main(data):
