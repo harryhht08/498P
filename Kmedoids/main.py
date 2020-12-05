@@ -1,15 +1,11 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
 import random
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from pandas.plotting import parallel_coordinates
 
-
+# Attain the original dataset for the analysis
 def getDataset():
     data = pd.read_csv("mushroom-attributions-200-samples.csv")
     data = data[['odor', 'bruises']]  # Reduce dims of dataset in order to visualize
@@ -21,6 +17,7 @@ def getDataset():
     return dataset
 
 
+# Generate 2-d test data
 def generate2dData():
     xs = []
     ys = []
@@ -37,6 +34,7 @@ def generate2dData():
     return data
 
 
+# Compute distance between each pair of data points
 # data: the actual data we use for this algorithm, it is a collection of data points, each point has dimension dims
 def computeDistance(i, j, data):
     dims = len(data[0])
@@ -46,6 +44,7 @@ def computeDistance(i, j, data):
     return dis ** .5
 
 
+# Build Rank and Similarity tables. This function produces the crucial tables this algorithm requires
 def buildRankTable(data):
     n = len(data)
     rank = [[(0, 0) for i in range(n)] for j in range(n)]
@@ -79,6 +78,7 @@ def buildRankTable(data):
     return rank, similarityMetrix
 
 
+# Compute the hostility value of a data point
 # tableS: a nxn matrix containing all Sij values
 # setG: set of integers - indexes of data points
 # n: size of dataset
@@ -92,6 +92,7 @@ def getHv(index, m, n, rankTable, setG):
     return hv
 
 
+# Randomly select k data points as our starting k medoids.
 def randomMedoids(k, data):
     medoids = set()
     for i in range(k):
@@ -101,6 +102,7 @@ def randomMedoids(k, data):
     return medoids
 
 
+# Assign each points to closest medoid, using Rank table
 def assignToClusters(k, n, medoids, rankTable):
     groups = []  # list of Set
     for i in range(k):
@@ -119,17 +121,10 @@ def assignToClusters(k, n, medoids, rankTable):
             if rankRowI[m] == min:
                 groups[j].append(i)
 
-        # cursor = 0
-        # while (cursor < n):
-        #     if similarityMetrix[i][cursor] in medoids:
-        #         for groupIndex in range(k):
-        #             if similarityMetrix[i][cursor] == medoidsList[groupIndex]:
-        #                 groups[groupIndex].append(similarityMetrix[i][cursor])
-        #         break  # Break the while loop if found the closest medoid
-        #     cursor += 1
     return groups
 
 
+# Update medoids: use the two tables to calculate the point with highest hv value in each cluster and set it as the new medoid
 def updateMedoids(k, m, n, medoids, similarityTable, rankTable):
     newMedoids = set()
     for med in medoids:
@@ -140,6 +135,17 @@ def updateMedoids(k, m, n, medoids, similarityTable, rankTable):
             if hv > maxHv[1]:
                 maxHv = (simi, hv)
         newMedoids.add(maxHv[0])
+
+
+def plotParralelAndRadar(clusters, data):
+    allData = []
+    for c in clusters:
+        clusterData = []
+        for index in c:
+            clusterData.append(data[index])
+        allData.append(clusterData)
+    parallel_coordinates(data, color=['g','m'])
+
 
 
 def printNice(table):
@@ -156,16 +162,6 @@ def testPrintTables(data):
     printNice(s)
 
 
-def test1D():
-    data = []
-    for i in range(3):
-        data.append([i])
-        data.append([i])
-        data.append([i + 10])
-        data.append([i + 10])
-    main(data)
-
-
 def test2D():
     main(generate2dData())
 
@@ -176,13 +172,6 @@ def testMushroomDataset():
     for i in range(len(df)):
         dataset.append(df.loc[i])
     main(dataset)
-
-
-def plotClusters(clusters, data):
-    for i in clusters[0]:
-        plt.scatter(data[i][0], data[i][1], c='red')
-    for i in clusters[1]:
-        plt.scatter(data[i][0], data[i][1], c='green')
 
 
 # This method checks whether there exists some data points in different clusters
@@ -196,6 +185,7 @@ def checkClustersContainDifferent(clusters):
     return True
 
 
+# Standardize data before the PCA analysis
 def standardizeData(df):
     features = df.columns
     # Separating out the features
@@ -206,6 +196,7 @@ def standardizeData(df):
     x = StandardScaler().fit_transform(x)
 
 
+# Perform PCA and plot
 def pcaDataAndPlot(x, clusters):
     pca = PCA(n_components=2)
     principalComponents = pca.fit_transform(x)
@@ -237,35 +228,14 @@ def main(data):
         updateMedoids(k, m, n, medoids, similarityMetrix, rankTable)
     clusters = assignToClusters(k, n, medoids, rankTable)
 
-    # groups = assignToClusters(k, n, medoids, rankTable)
-    # newMedoids = set()
-    # for group in groups:
-    #
-    #     # The first position stores the new medoid, the second stores the maximum hv value
-    #     maxHv = (-1, -1)
-    #     for point in group:
-    #         hv = getHv(point, m, n, rankTable, group)
-    #         if hv > maxHv[1]:
-    #             maxHv = (point, hv)
-    #     newMedoids.add(maxHv[0])
-    # medoids = newMedoids
-    # Output: Groups!
-
-    if len(data[0]) <= 2:
-        plotClusters(clusters, data)
-
-    print(clusters)
+    printNice(clusters)
     print(checkClustersContainDifferent(clusters))
+    plotParralelAndRadar(clusters, data)
 
 
 if __name__ == '__main__':
-    # testList = [[9], [11], [9], [8], [20], [7], [4]]
-    # testPrintTables(testList)
-
     # data = getDataset()
     # main(data)
-
-    # test1D()
 
     # test2D()
 
